@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Enrollment Portal - Staff')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('enrollment')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <!-- Page Header -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                    <h3 class="fw-bold mb-1 text-dark"><i class="bi bi-people-fill text-primary me-2"></i>Campus Enrollment & User Management</h3>
+                    <p class="text-muted mb-0">Official administrative registry for Student onboarding, Faculty management, and profile updates.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#enrollStudentModal">
+                        <i class="bi bi-person-plus-fill me-1"></i> Enroll Student
+                    </button>
+                    <button class="btn btn-outline-primary shadow-sm bg-white" data-bs-toggle="modal" data-bs-target="#enrollTeacherModal">
+                        <i class="bi bi-person-badge-fill me-1"></i> Register Faculty
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs: Students vs Teachers -->
+            <ul class="nav nav-pills mb-3" id="enrollmentTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active px-4 fw-semibold" id="students-tab" data-bs-toggle="tab" data-bs-target="#students-pane" type="button" role="tab">
+                        <i class="bi bi-mortarboard me-1"></i> Enrolled Students (<span th:text="${#lists.size(students)}">0</span>)
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link px-4 fw-semibold" id="teachers-tab" data-bs-toggle="tab" data-bs-target="#teachers-pane" type="button" role="tab">
+                        <i class="bi bi-person-workspace me-1"></i> Faculty Members (<span th:text="${#lists.size(teachers)}">0</span>)
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="enrollmentTabContent">
+                <!-- Students Tab -->
+                <div class="tab-pane fade show active" id="students-pane" role="tabpanel">
+                    <div class="card card-custom">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <span class="fw-bold text-dark"><i class="bi bi-table me-2 text-primary"></i>Enrolled Students Directory</span>
+                            <span class="badge bg-light text-dark border" th:text="${#lists.size(students)} + ' Students Registered'">0</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Roll Number</th>
+                                    <th>Full Name</th>
+                                    <th>Email Address</th>
+                                    <th>Class Group</th>
+                                    <th>Admission Year</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="st : ${students}">
+                                    <td>
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-semibold" th:text="${st.rollNumber}">2026IT01</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark" th:text="${st.fullName}">Student Name</div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted small" th:text="${st.user.email}">student@campus360.edu</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border" th:text="${st.classGroup.displayName}">Class</span>
+                                    </td>
+                                    <td th:text="${st.admissionYear != null ? st.admissionYear : 'N/A'}">2024</td>
+                                    <td th:text="${st.phone != null ? st.phone : 'N/A'}">Phone</td>
+                                    <td>
+                                        <span th:if="${st.user.active}" class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle me-1"></i>Active</span>
+                                        <span th:unless="${st.user.active}" class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" th:data-bs-target="'#editStudentModal_' + ${st.studentId}" title="Edit Student">
+                                                <i class="bi bi-pencil-square"></i> Edit
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" th:data-bs-target="'#deleteStudentModal_' + ${st.studentId}" title="Delete Student">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Edit Student Modal -->
+                                        <div class="modal fade text-start" th:id="'editStudentModal_' + ${st.studentId}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <form th:action="@{'/staff/students/' + ${st.studentId} + '/edit'}" method="post">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title fw-bold">
+                                                                <i class="bi bi-pencil-square text-primary me-2"></i>Edit Student Profile
+                                                            </h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Roll Number (Read-only)</label>
+                                                                <input type="text" class="form-control bg-light" th:value="${st.rollNumber}" readonly>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Full Name *</label>
+                                                                <input type="text" name="fullName" class="form-control" th:value="${st.fullName}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Email Address *</label>
+                                                                <input type="email" name="email" class="form-control" th:value="${st.user.email}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Class Group *</label>
+                                                                <select name="classId" class="form-select" required>
+                                                                    <option th:each="cg : ${classGroups}" th:value="${cg.classId}" th:text="${cg.displayName}" th:selected="${cg.classId == st.classGroup.classId}">Class</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="row g-2 mb-3">
+                                                                <div class="col-6">
+                                                                    <label class="form-label small fw-semibold">Admission Year</label>
+                                                                    <input type="text" name="admissionYear" class="form-control" th:value="${st.admissionYear}">
+                                                                </div>
+                                                                <div class="col-6">
+                                                                    <label class="form-label small fw-semibold">Phone</label>
+                                                                    <input type="text" name="phone" class="form-control" th:value="${st.phone}">
+                                                                </div>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Reset Password (Optional)</label>
+                                                                <input type="password" name="newPassword" class="form-control" placeholder="Leave blank to keep existing password">
+                                                            </div>
+                                                            <div class="mb-2">
+                                                                <label class="form-label small fw-semibold">Account Status</label>
+                                                                <select name="isActive" class="form-select">
+                                                                    <option value="true" th:selected="${st.user.active}">Active (Allowed to Log In)</option>
+                                                                    <option value="false" th:selected="${!st.user.active}">Suspended / Inactive</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Delete Student Modal -->
+                                        <div class="modal fade text-start" th:id="'deleteStudentModal_' + ${st.studentId}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered modal-sm">
+                                                <div class="modal-content">
+                                                    <form th:action="@{'/staff/students/' + ${st.studentId} + '/delete'}" method="post">
+                                                        <div class="modal-header border-0 pb-0">
+                                                            <h6 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Student</h6>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body py-3">
+                                                            <p class="small text-muted mb-0">Are you sure you want to permanently remove <strong th:text="${st.fullName}">Student</strong> (<span th:text="${st.rollNumber}"></span>)? This will also remove login access.</p>
+                                                        </div>
+                                                        <div class="modal-footer border-0 pt-0">
+                                                            <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash me-1"></i> Confirm Delete</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(students)}">
+                                    <td colspan="8" class="text-center text-muted py-4">No students enrolled yet.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Faculty Tab -->
+                <div class="tab-pane fade" id="teachers-pane" role="tabpanel">
+                    <div class="card card-custom">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <span class="fw-bold text-dark"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Faculty Members Directory</span>
+                            <span class="badge bg-light text-dark border" th:text="${#lists.size(teachers)} + ' Faculty Members Registered'">0</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                <tr>
+                                    <th>Employee ID</th>
+                                    <th>Full Name</th>
+                                    <th>Email Address</th>
+                                    <th>Department</th>
+                                    <th>Designation</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="tc : ${teachers}">
+                                    <td>
+                                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle font-monospace fw-semibold" th:text="${tc.employeeId}">prof01</span>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold text-dark" th:text="${tc.fullName}">Prof. Name</div>
+                                    </td>
+                                    <td>
+                                        <span class="text-muted small" th:text="${tc.user.email}">prof@campus360.edu</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border" th:text="${tc.department}">Dept</span>
+                                    </td>
+                                    <td th:text="${tc.designation}">Designation</td>
+                                    <td>
+                                        <span th:if="${tc.user.active}" class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle me-1"></i>Active</span>
+                                        <span th:unless="${tc.user.active}" class="badge bg-danger-subtle text-danger border border-danger-subtle"><i class="bi bi-x-circle me-1"></i>Inactive</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" th:data-bs-target="'#editTeacherModal_' + ${tc.teacherId}" title="Edit Faculty">
+                                                <i class="bi bi-pencil-square"></i> Edit
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" th:data-bs-target="'#deleteTeacherModal_' + ${tc.teacherId}" title="Delete Faculty">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+
+                                        <!-- Edit Teacher Modal -->
+                                        <div class="modal fade text-start" th:id="'editTeacherModal_' + ${tc.teacherId}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered">
+                                                <div class="modal-content">
+                                                    <form th:action="@{'/staff/teachers/' + ${tc.teacherId} + '/edit'}" method="post">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title fw-bold">
+                                                                <i class="bi bi-pencil-square text-primary me-2"></i>Edit Faculty Profile
+                                                            </h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body">
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Employee ID (Read-only)</label>
+                                                                <input type="text" class="form-control bg-light" th:value="${tc.employeeId}" readonly>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Full Name *</label>
+                                                                <input type="text" name="fullName" class="form-control" th:value="${tc.fullName}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Email Address *</label>
+                                                                <input type="email" name="email" class="form-control" th:value="${tc.user.email}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Department *</label>
+                                                                <input type="text" name="department" class="form-control" th:value="${tc.department}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Designation *</label>
+                                                                <input type="text" name="designation" class="form-control" th:value="${tc.designation}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label class="form-label small fw-semibold">Reset Password (Optional)</label>
+                                                                <input type="password" name="newPassword" class="form-control" placeholder="Leave blank to keep existing password">
+                                                            </div>
+                                                            <div class="mb-2">
+                                                                <label class="form-label small fw-semibold">Account Status</label>
+                                                                <select name="isActive" class="form-select">
+                                                                    <option value="true" th:selected="${tc.user.active}">Active (Allowed to Log In)</option>
+                                                                    <option value="false" th:selected="${!tc.user.active}">Suspended / Inactive</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save Changes</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Delete Teacher Modal -->
+                                        <div class="modal fade text-start" th:id="'deleteTeacherModal_' + ${tc.teacherId}" tabindex="-1" aria-hidden="true">
+                                            <div class="modal-dialog modal-dialog-centered modal-sm">
+                                                <div class="modal-content">
+                                                    <form th:action="@{'/staff/teachers/' + ${tc.teacherId} + '/delete'}" method="post">
+                                                        <div class="modal-header border-0 pb-0">
+                                                            <h6 class="modal-title fw-bold text-danger"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Faculty Member</h6>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body py-3">
+                                                            <p class="small text-muted mb-0">Are you sure you want to permanently remove <strong th:text="${tc.fullName}">Faculty</strong>? Any assigned subjects will be unassigned automatically.</p>
+                                                        </div>
+                                                        <div class="modal-footer border-0 pt-0">
+                                                            <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                            <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-trash me-1"></i> Confirm Delete</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(teachers)}">
+                                    <td colspan="7" class="text-center text-muted py-4">No teachers registered yet.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal: Enroll New Student -->
+            <div class="modal fade" id="enrollStudentModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form th:action="@{/staff/enrollment/student}" method="post">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-person-plus text-primary me-2"></i>Enroll New Student</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Roll Number (Username) *</label>
+                                    <input type="text" name="rollNumber" class="form-control" placeholder="e.g. 2026IT03" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Full Name *</label>
+                                    <input type="text" name="fullName" class="form-control" placeholder="e.g. Rohini Sharma" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Email Address *</label>
+                                    <input type="email" name="email" class="form-control" placeholder="e.g. rohini.s@campus360.edu" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Initial Password *</label>
+                                    <input type="password" name="password" class="form-control" placeholder="e.g. password123" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Class Group *</label>
+                                    <select name="classId" class="form-select" required>
+                                        <option value="" disabled selected>-- Select Class Group --</option>
+                                        <option th:each="cg : ${classGroups}" th:value="${cg.classId}" th:text="${cg.displayName}">Class</option>
+                                    </select>
+                                </div>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-semibold">Admission Year</label>
+                                        <input type="text" name="admissionYear" class="form-control" placeholder="2024">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-semibold">Phone</label>
+                                        <input type="text" name="phone" class="form-control" placeholder="+91 9876543210">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Enroll Student</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal: Register Faculty -->
+            <div class="modal fade" id="enrollTeacherModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form th:action="@{/staff/enrollment/teacher}" method="post">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-person-badge text-primary me-2"></i>Register Faculty Member</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Employee ID (Username) *</label>
+                                    <input type="text" name="employeeId" class="form-control" placeholder="e.g. prof02" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Full Name *</label>
+                                    <input type="text" name="fullName" class="form-control" placeholder="e.g. Dr. Anjali Mehta" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Email Address *</label>
+                                    <input type="email" name="email" class="form-control" placeholder="e.g. anjali.m@campus360.edu" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Initial Password *</label>
+                                    <input type="password" name="password" class="form-control" placeholder="e.g. password123" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Department *</label>
+                                    <input type="text" name="department" class="form-control" placeholder="e.g. Information Technology" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Designation *</label>
+                                    <input type="text" name="designation" class="form-control" placeholder="e.g. Assistant Professor" required>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Register Faculty</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

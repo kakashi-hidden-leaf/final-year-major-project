@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Administrative Grievance Tickets')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('issues')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <div class="mb-4">
+                <h3 class="fw-bold mb-1">Administrative Grievance Tickets</h3>
+                <p class="text-muted mb-0">Review student inquiries, fee/admission document correction requests, and inspect uploaded proof.</p>
+            </div>
+
+            <!-- Issues Table -->
+            <div class="card card-custom">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-ticket-detailed-fill text-primary me-2"></i>Staff Issue Tickets</span>
+                    <span class="badge bg-light text-dark border" th:text="${#lists.size(tickets)} + ' Total'">0</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Student</th>
+                            <th>Category</th>
+                            <th>Description</th>
+                            <th>Proof File</th>
+                            <th>Status</th>
+                            <th>Created On</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="t : ${tickets}">
+                            <td><strong th:text="'#' + ${t.ticketId}">#1</strong></td>
+                            <td>
+                                <div class="fw-semibold text-dark" th:text="${t.student.fullName}">Student Name</div>
+                                <code class="small" th:text="${t.student.rollNumber}">2026IT01</code>
+                            </td>
+                            <td><span class="badge bg-light text-dark border" th:text="${t.issueCategory}">Category</span></td>
+                            <td style="max-width: 250px;">
+                                <div class="text-truncate" th:text="${t.description}">Description</div>
+                                <div th:if="${t.resolutionRemarks}" class="small text-muted fst-italic mt-1">
+                                    Remarks: <span th:text="${t.resolutionRemarks}">Remarks</span>
+                                </div>
+                            </td>
+                            <td>
+                                <a th:if="${t.proofFilePath}" th:href="@{'/files/issues/' + ${t.proofFilePath}}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-file-earmark-arrow-down me-1"></i> Proof
+                                </a>
+                                <span th:unless="${t.proofFilePath}" class="text-muted small">No file</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(t.status)}" th:text="${t.status}">STATUS</span>
+                            </td>
+                            <td class="small text-muted" th:text="${#temporals.format(t.createdAt, 'MMM dd, yyyy HH:mm')}">Date</td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" th:data-bs-target="'#resolveModal' + ${t.ticketId}">
+                                    <i class="bi bi-pencil-square me-1"></i> Resolve
+                                </button>
+
+                                <!-- Resolve Modal for this ticket -->
+                                <div class="modal fade" th:id="'resolveModal' + ${t.ticketId}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <form th:action="@{'/staff/issues/' + ${t.ticketId} + '/resolve'}" method="post">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold">Update Ticket #<span th:text="${t.ticketId}">1</span></h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-semibold">Status *</label>
+                                                        <select name="status" class="form-select" required>
+                                                            <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}" th:selected="${st == t.status}">STATUS</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-semibold">Resolution Remarks *</label>
+                                                        <textarea name="resolutionRemarks" rows="4" class="form-control" placeholder="Provide notes or resolution details to the student..." required th:text="${t.resolutionRemarks}"></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary">Update Ticket</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(tickets)}">
+                            <td colspan="8" class="text-center text-muted py-4">No administrative issue tickets found.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

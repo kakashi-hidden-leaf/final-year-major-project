@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Academic Grievance Resolution')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('issues')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <!-- Header -->
+            <div class="mb-4">
+                <h3 class="fw-bold mb-1">Student Grievances</h3>
+                <p class="text-muted mb-0">Review and resolve attendance discrepancies, leave requests, and academic inquiries submitted by students.</p>
+            </div>
+
+            <!-- KPI Metric Summary -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Assigned Tickets</div>
+                                <h3 class="metric-value" th:text="${#lists.size(tickets)}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-blue">
+                                <i class="bi bi-chat-dots"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Pending Action</div>
+                                <h3 class="metric-value text-danger"
+                                    th:text="${#lists.size(tickets.?[status.name() == 'OPEN' or status.name() == 'IN_PROGRESS'])}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-amber">
+                                <i class="bi bi-exclamation-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Resolved Grievances</div>
+                                <h3 class="metric-value text-success"
+                                    th:text="${#lists.size(tickets.?[status.name() == 'RESOLVED'])}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-green">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tickets List -->
+            <div class="card card-custom">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <span class="fw-bold fs-6"><i class="bi bi-patch-question text-primary me-2"></i>Grievances</span>
+                    <span class="badge bg-light text-dark border" th:text="${#lists.size(tickets)} + ' Total Tickets'">0</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex flex-column gap-4" th:if="${not #lists.isEmpty(tickets)}">
+                        <div th:each="t : ${tickets}" class="card border rounded-3 p-4 shadow-xs">
+                            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h5 class="fw-bold text-dark mb-0" th:text="${t.student.fullName}">Student Name</h5>
+                                        <code class="px-2 py-0.5 bg-light rounded fw-bold" th:text="${t.student.rollNumber}">2026IT01</code>
+                                        <span class="badge bg-secondary-subtle text-secondary" th:text="${t.student.classGroup.displayName}">2nd Year B.E. IT</span>
+                                    </div>
+                                    <div class="small text-muted mt-1">
+                                        Ticket #<span th:text="${t.ticketId}">1</span> &bull; Submitted on <span th:text="${#temporals.format(t.createdAt, 'MMM dd, yyyy HH:mm')}">Date</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2.5 py-1.5" th:text="${t.issueCategory}">Attendance Discrepancy</span>
+                                    <span class="badge px-2.5 py-1.5" th:classappend="'badge-' + ${#strings.toLowerCase(t.status)}" th:text="${t.status}">STATUS</span>
+                                </div>
+                            </div>
+
+                            <!-- Student's Written Grievance (Full, untruncated) -->
+                            <div class="mb-3">
+                                <label class="small fw-semibold text-muted text-uppercase mb-1">Student's Description of Issue:</label>
+                                <div class="p-3 bg-light rounded-3 text-dark small" style="white-space: pre-line; line-height: 1.6;" th:text="${t.description}">
+                                    Detailed issue description will appear here.
+                                </div>
+                            </div>
+
+                            <!-- Attached Proof Document -->
+                            <div class="mb-3 d-flex align-items-center gap-2">
+                                <span class="small fw-semibold text-muted text-uppercase">Supporting Proof:</span>
+                                <a th:if="${t.proofFilePath}" th:href="@{'/files/issues/' + ${t.proofFilePath}}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-file-earmark-arrow-down me-1"></i> Download / Inspect Proof Document
+                                </a>
+                                <span th:unless="${t.proofFilePath}" class="small text-muted fst-italic">No document attached by student</span>
+                            </div>
+
+                            <!-- Faculty Resolution Remarks if already updated -->
+                            <div th:if="${t.resolutionRemarks}" class="p-3 bg-success-subtle border border-success-subtle rounded-3 mb-3 small">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="text-success"><i class="bi bi-chat-quote-fill me-1"></i>Faculty Remarks & Resolution:</strong>
+                                    <span class="small text-muted" th:if="${t.resolvedAt}" th:text="'Resolved on ' + ${#temporals.format(t.resolvedAt, 'MMM dd, yyyy')}">Date</span>
+                                </div>
+                                <div class="text-dark" th:text="${t.resolutionRemarks}">Remarks</div>
+                            </div>
+
+                            <!-- Action Button -->
+                            <div class="d-flex justify-content-end pt-2 border-top">
+                                <button class="btn btn-primary" data-bs-toggle="modal" th:data-bs-target="'#resolveModal' + ${t.ticketId}">
+                                    <i class="bi bi-check2-circle me-1"></i> Review & Resolve
+                                </button>
+                            </div>
+
+                            <!-- Resolution Modal -->
+                            <div class="modal fade" th:id="'resolveModal' + ${t.ticketId}" tabindex="-1">
+                                <div class="modal-dialog modal-dialog-centered modal-lg">
+                                    <div class="modal-content">
+                                        <form th:action="@{'/teacher/issues/' + ${t.ticketId} + '/resolve'}" method="post">
+                                            <div class="modal-header bg-light">
+                                                <h5 class="modal-title fw-bold">Resolve Ticket #<span th:text="${t.ticketId}">1</span></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body p-4">
+                                                <!-- Ticket Details Summary for context -->
+                                                <div class="bg-light p-3 rounded-3 mb-4 small">
+                                                    <div class="row g-2">
+                                                        <div class="col-sm-6"><strong>Student:</strong> <span th:text="${t.student.fullName} + ' (' + ${t.student.rollNumber} + ')'">Student</span></div>
+                                                        <div class="col-sm-6"><strong>Class:</strong> <span th:text="${t.student.classGroup.displayName}">Class</span></div>
+                                                        <div class="col-sm-6"><strong>Category:</strong> <span th:text="${t.issueCategory}">Category</span></div>
+                                                        <div class="col-sm-6"><strong>Current Status:</strong> <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(t.status)}" th:text="${t.status}">STATUS</span></div>
+                                                        <div class="col-12 mt-2">
+                                                            <strong>Student's Issue Statement:</strong>
+                                                            <div class="mt-1 text-secondary" th:text="${t.description}">Description</div>
+                                                        </div>
+                                                        <div class="col-12 mt-2" th:if="${t.proofFilePath}">
+                                                            <a th:href="@{'/files/issues/' + ${t.proofFilePath}}" target="_blank" class="btn btn-sm btn-outline-primary py-1">
+                                                                <i class="bi bi-file-earmark-arrow-down me-1"></i> Inspect Attached Student Proof File
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Grievance Status *</label>
+                                                    <select name="status" class="form-select" required>
+                                                        <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}" th:selected="${st == t.status}">STATUS</option>
+                                                    </select>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label class="form-label small fw-semibold">Faculty Remarks & Decision Rationale *</label>
+                                                    <textarea name="resolutionRemarks" rows="4" class="form-control"
+                                                              placeholder="Provide formal resolution explanation (e.g. Attendance discrepancy rectified in register, medical leave sanctioned, or reason for rejection)..."
+                                                              required th:text="${t.resolutionRemarks}"></textarea>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer bg-light">
+                                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Save Resolution</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div th:if="${#lists.isEmpty(tickets)}" class="text-center text-muted py-5">
+                        <i class="bi bi-check2-circle fs-1 text-success d-block mb-2"></i>
+                        <h5 class="fw-bold">No Academic Grievance Tickets</h5>
+                        <p class="text-muted small">No students have raised academic issues assigned to your faculty profile.</p>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

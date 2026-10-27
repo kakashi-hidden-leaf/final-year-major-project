@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Assignments')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('assignments')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <!-- Page Header -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                    <h3 class="fw-bold mb-1">Assignments</h3>
+                    <p class="text-muted mb-0">View assignments posted by your teachers, download question files, and submit your work.</p>
+                </div>
+                <button class="btn btn-primary btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#submitAssignmentModal" onclick="setModalAssignment('', '', '')">
+                    <i class="bi bi-cloud-arrow-up me-1"></i> Submit Work
+                </button>
+            </div>
+
+            <!-- SECTION 1: Active Assigned Tasks -->
+            <div class="mb-5">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold text-dark mb-0">Active Class Assignments</h5>
+                    <span class="badge bg-light text-dark border" th:text="${#lists.size(assignedTasks)} + ' Active Tasks'">0</span>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-6" th:each="task : ${assignedTasks}">
+                        <div class="card card-custom h-100 border shadow-xs">
+                            <div class="card-body p-4 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1"
+                                          th:text="${task.subject.displayName}">IT401 - Database Systems</span>
+                                    <span class="badge bg-light text-dark border px-2 py-1">
+                                        Due: <span th:text="${#temporals.format(task.dueDate, 'MMM dd, yyyy')}">Oct 25, 2026</span>
+                                    </span>
+                                </div>
+
+                                <h5 class="fw-bold text-dark mt-2 mb-2" th:text="${task.title}">Assignment Title</h5>
+
+                                <div class="bg-light p-3 rounded-3 mb-3 text-secondary small flex-grow-1" style="white-space: pre-line;" th:text="${task.description}">
+                                    Assignment questions.
+                                </div>
+
+                                <!-- Submission Status for this task -->
+                                <div class="mb-3" th:with="mySub=${submissionMap.get(task.assignmentId)}">
+                                    <div th:if="${mySub != null}" class="p-3 bg-success-subtle border border-success-subtle rounded-3 small">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <strong class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Submitted</strong>
+                                            <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(mySub.status)}" th:text="${mySub.status}">REVIEWED</span>
+                                        </div>
+                                        <div class="text-secondary small">Turned in: <span th:text="${#temporals.format(mySub.submittedAt, 'MMM dd, yyyy HH:mm')}">Date</span></div>
+                                        <div th:if="${mySub.remarks}" class="mt-2 text-dark">
+                                            <strong>Teacher Feedback:</strong> <span class="fst-italic" th:text="${mySub.remarks}">Feedback</span>
+                                        </div>
+                                        <div class="mt-2">
+                                            <a th:href="@{'/files/assignments/' + ${mySub.filePath}}" target="_blank" class="btn btn-xs btn-outline-success py-1 px-2 small">
+                                                <i class="bi bi-file-earmark-check me-1"></i> View Submitted File
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div th:unless="${mySub != null}" class="p-2.5 bg-warning-subtle border border-warning-subtle rounded-3 small d-flex align-items-center justify-content-between">
+                                        <span class="text-dark fw-semibold"><i class="bi bi-exclamation-circle text-warning me-1"></i>Not Submitted Yet</span>
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-wrap justify-content-between align-items-center pt-2 border-top gap-2 mt-auto">
+                                    <div>
+                                        <a th:if="${task.questionFilePath}" th:href="@{'/files/assignments/' + ${task.questionFilePath}}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-download me-1"></i> Question Paper
+                                        </a>
+                                        <span th:unless="${task.questionFilePath}" class="small text-muted fst-italic">No attachment</span>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#submitAssignmentModal"
+                                                th:data-assignment-id="${task.assignmentId}"
+                                                th:data-subject-id="${task.subject.subjectId}"
+                                                th:data-title="${task.title}"
+                                                onclick="handleTurnInClick(this)">
+                                            <i class="bi bi-cloud-arrow-up me-1"></i> <span th:text="${submissionMap.containsKey(task.assignmentId) ? 'Resubmit' : 'Submit Solution'}">Submit Solution</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12" th:if="${#lists.isEmpty(assignedTasks)}">
+                        <div class="card card-custom p-4 text-center text-muted">
+                            <i class="bi bi-journal-check fs-2 text-success mb-2"></i>
+                            <h6 class="fw-bold text-dark mb-1">No Active Assignments</h6>
+                            <p class="small mb-0">No active assignments are currently due for your class.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: Submissions History Table -->
+            <div class="card card-custom">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <span class="fw-bold fs-6">My Submission History</span>
+                    <span class="badge bg-light text-dark border" th:text="${#lists.size(submissions)} + ' Submissions'">0</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Subject</th>
+                            <th>Assignment Title</th>
+                            <th>File</th>
+                            <th>Status</th>
+                            <th>Teacher Feedback</th>
+                            <th>Submitted Date</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="s : ${submissions}">
+                            <td>
+                                <strong class="text-dark" th:text="${s.subject.subjectName}">Database Management Systems</strong>
+                                <div class="small text-muted" th:text="${s.subject.subjectCode}">IT401</div>
+                            </td>
+                            <td class="fw-semibold text-dark" th:text="${s.assignmentTitle}">Title</td>
+                            <td>
+                                <a th:href="@{'/files/assignments/' + ${s.filePath}}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-download me-1"></i> Download
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(s.status)}" th:text="${s.status}">STATUS</span>
+                            </td>
+                            <td>
+                                <span th:if="${s.remarks}" class="text-dark small" th:text="${s.remarks}">Feedback</span>
+                                <span th:unless="${s.remarks}" class="text-muted small fst-italic">Pending evaluation</span>
+                            </td>
+                            <td class="small text-muted" th:text="${#temporals.format(s.submittedAt, 'MMM dd, yyyy')}">Date</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(submissions)}">
+                            <td colspan="6" class="text-center text-muted py-4">No assignments submitted yet.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal: Submit Assignment -->
+            <div class="modal fade" id="submitAssignmentModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form th:action="@{/student/assignments/submit}" method="post" enctype="multipart/form-data">
+                            <input type="hidden" id="modalAssignmentId" name="assignmentId" value="">
+                            <div class="modal-header border-bottom">
+                                <h5 class="modal-title fw-bold">Submit Assignment</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Subject *</label>
+                                    <select id="modalSubjectSelect" name="subjectId" class="form-select" required>
+                                        <option value="" disabled selected>-- Select Subject --</option>
+                                        <option th:each="sub : ${subjects}" th:value="${sub.subjectId}" th:text="${sub.displayName}">Subject</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Assignment Title *</label>
+                                    <input type="text" id="modalTitleInput" name="title" class="form-control" placeholder="e.g. Lab Experiment 1" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Solution File *</label>
+                                    <input type="file" name="file" class="form-control" required accept=".pdf,.docx,.zip,.doc">
+                                    <div class="form-text small">Accepted formats: PDF, DOCX, ZIP (Max 10MB)</div>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-top bg-light">
+                                <button type="button" class="btn btn-sm btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-sm btn-primary">Submit File</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+
+<script>
+    function handleTurnInClick(btn) {
+        var aId = btn.getAttribute('data-assignment-id');
+        var sId = btn.getAttribute('data-subject-id');
+        var title = btn.getAttribute('data-title');
+        setModalAssignment(aId, sId, title);
+    }
+
+    function setModalAssignment(assignmentId, subjectId, title) {
+        document.getElementById('modalAssignmentId').value = assignmentId || '';
+        if (subjectId) {
+            document.getElementById('modalSubjectSelect').value = subjectId;
+        }
+        if (title) {
+            document.getElementById('modalTitleInput').value = title;
+        } else {
+            document.getElementById('modalTitleInput').value = '';
+        }
+    }
+</script>
+</body>
+</html>

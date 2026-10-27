@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Online Document Vault')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('vault')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <div class="mb-4">
+                <h3 class="fw-bold mb-1">My Online Document Vault</h3>
+                <p class="text-muted mb-0">Access verified official certificates, admission receipts, and bonafide documents uploaded by Office Staff.</p>
+            </div>
+
+            <!-- Vault Info Banner -->
+            <div class="card border-0 bg-info-subtle rounded-3 p-3 mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="bi bi-shield-check text-info fs-3"></i>
+                    <div>
+                        <h6 class="fw-bold text-info mb-1">Tamper-Proof Digital Repository</h6>
+                        <p class="small text-secondary mb-0">
+                            Documents hosted in this vault are officially verified by the college administration cell. You can view or download copies for scholarship or job verification at any time.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vault Documents List -->
+            <div class="card card-custom">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-safe-fill text-primary me-2"></i>My Vault Documents</span>
+                    <span class="badge bg-light text-dark border" th:text="${#lists.size(documents)} + ' Archived Files'">0</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Document Title</th>
+                            <th>Category</th>
+                            <th>Verified By</th>
+                            <th>Archived Date</th>
+                            <th>Download</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="d : ${documents}">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
+                                    <div>
+                                        <div class="fw-semibold text-dark" th:text="${d.documentTitle}">Admission Receipt</div>
+                                        <small class="text-muted">Digital Vault Copy</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-light text-primary border" th:text="${d.documentType}">Admission Receipt</span></td>
+                            <td class="small text-secondary" th:text="${d.uploadedByStaff != null ? d.uploadedByStaff.fullName : 'Admission Cell'}">Rajesh Sharma</td>
+                            <td class="small text-muted" th:text="${#temporals.format(d.uploadedAt, 'MMM dd, yyyy')}">Date</td>
+                            <td>
+                                <a th:href="@{'/files/vault/' + ${d.filePath}}" target="_blank" class="btn btn-sm btn-primary">
+                                    <i class="bi bi-download me-1"></i> Download File
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(documents)}">
+                            <td colspan="5" class="text-center text-muted py-4">No documents stored in your vault yet.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

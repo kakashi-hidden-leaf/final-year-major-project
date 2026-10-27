@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Admission Document Vault')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('vault')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold mb-1">Admission Document Vault</h3>
+                    <p class="text-muted mb-0">Upload and digitally archive verified student certificates, admission receipts, and bonafides.</p>
+                </div>
+                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#uploadVaultDocModal">
+                    <i class="bi bi-cloud-arrow-up-fill me-1"></i> Upload Document to Vault
+                </button>
+            </div>
+
+            <!-- Documents Table Card -->
+            <div class="card card-custom">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-safe-fill text-primary me-2"></i>Archived Student Documents</span>
+                    <span class="badge bg-light text-dark border" th:text="${#lists.size(documents)} + ' Documents'">0</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Roll Number</th>
+                            <th>Document Title</th>
+                            <th>Document Type</th>
+                            <th>Uploaded On</th>
+                            <th>Uploaded By</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="doc : ${documents}">
+                            <td class="fw-semibold text-dark" th:text="${doc.student.fullName}">Student Name</td>
+                            <td><code class="fw-bold" th:text="${doc.student.rollNumber}">2026IT01</code></td>
+                            <td th:text="${doc.documentTitle}">Admission Receipt</td>
+                            <td><span class="badge bg-light text-primary border" th:text="${doc.documentType}">Type</span></td>
+                            <td class="small text-muted" th:text="${#temporals.format(doc.uploadedAt, 'MMM dd, yyyy HH:mm')}">Date</td>
+                            <td class="small text-secondary" th:text="${doc.uploadedByStaff != null ? doc.uploadedByStaff.fullName : 'System'}">Staff</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-1">
+                                    <a th:href="@{'/files/vault/' + ${doc.filePath}}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-download me-1"></i> Download
+                                    </a>
+                                    <form th:action="@{'/staff/vault/document/' + ${doc.documentId} + '/delete'}" method="post" onsubmit="return confirm('Are you sure you want to remove this document from the vault?');" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Document"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(documents)}">
+                            <td colspan="7" class="text-center text-muted py-4">No documents stored in the vault yet.</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal: Upload Vault Document -->
+            <div class="modal fade" id="uploadVaultDocModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form th:action="@{/staff/vault/upload}" method="post" enctype="multipart/form-data">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold"><i class="bi bi-cloud-arrow-up text-primary me-2"></i>Upload Student Document</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Target Student *</label>
+                                    <select name="studentId" class="form-select" required>
+                                        <option value="" disabled selected>-- Select Enrolled Student --</option>
+                                        <option th:each="st : ${students}" th:value="${st.studentId}" th:text="${st.fullName} + ' (' + ${st.rollNumber} + ') - ' + ${st.classGroup.displayName}">Student</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Document Title *</label>
+                                    <input type="text" name="documentTitle" class="form-control" placeholder="e.g. Admission Fee Receipt 2024-25" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Document Type *</label>
+                                    <select name="documentType" class="form-select" required>
+                                        <option value="Admission Receipt">Admission Receipt</option>
+                                        <option value="12th Marksheet">12th Marksheet</option>
+                                        <option value="10th Marksheet">10th Marksheet</option>
+                                        <option value="Bonafide Certificate">Bonafide Certificate</option>
+                                        <option value="ID Verification Proof">ID Verification Proof</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Document File (Max 10MB) *</label>
+                                    <input type="file" name="file" class="form-control" required>
+                                    <div class="form-text">Accepted formats: PDF, JPG, PNG, DOCX.</div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i> Upload to Vault</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

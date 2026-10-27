@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Faculty Dashboard')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('dashboard')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                    <h3 class="fw-bold mb-1">Welcome back, <span th:text="${teacher.fullName}">Prof. Vikram Deshmukh</span></h3>
+                    <p class="text-muted mb-0"><span th:text="${teacher.designation}">HOD</span> &bull; <span th:text="${teacher.department}">IT Dept</span></p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a th:href="@{/teacher/subjects}" class="btn btn-outline-success shadow-sm">
+                        <i class="bi bi-mortarboard me-1"></i> My Subjects &amp; Classes
+                    </a>
+                    <a th:href="@{/teacher/attendance}" class="btn btn-primary shadow-sm">
+                        <i class="bi bi-check2-circle me-1"></i> Mark Attendance
+                    </a>
+                    <a th:href="@{/teacher/results}" class="btn btn-outline-primary shadow-sm">
+                        <i class="bi bi-award me-1"></i> Exam Results
+                    </a>
+                    <a th:href="@{/teacher/timetable}" class="btn btn-outline-secondary shadow-sm">
+                        <i class="bi bi-calendar3 me-1"></i> My Timetable
+                    </a>
+                </div>
+            </div>
+
+            <!-- KPI Metric Cards -->
+            <div class="row g-3 mb-4">
+                <!-- Assigned Subjects -->
+                <div class="col-xl-3 col-sm-6">
+                    <a th:href="@{/teacher/subjects}" class="text-decoration-none">
+                        <div class="card-metric">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="metric-label">Assigned Subjects</div>
+                                    <h3 class="metric-value text-dark" th:text="${#lists.size(assignedSubjects)}">0</h3>
+                                    <span class="small text-primary"><i class="bi bi-gear me-1"></i>Manage Courses &rarr;</span>
+                                </div>
+                                <div class="metric-icon-wrap icon-purple">
+                                    <i class="bi bi-book"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Today's Lectures -->
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Today's Lectures</div>
+                                <h3 class="metric-value" th:text="${#lists.size(todayLectures)}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-blue">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pending Assignment Reviews -->
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Pending Reviews</div>
+                                <h3 class="metric-value" th:text="${pendingAssignmentCount}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-green">
+                                <i class="bi bi-file-earmark-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Open Academic Issues -->
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Open Grievances</div>
+                                <h3 class="metric-value text-danger" th:text="${openIssuesCount}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-amber">
+                                <i class="bi bi-chat-dots"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Student Grievances -->
+            <div class="card card-custom mb-4" th:if="${not #lists.isEmpty(openIssuesList)}">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <span class="fw-bold fs-6"><i class="bi bi-patch-question text-primary me-2"></i>Student Grievances</span>
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle ms-2" th:text="${#lists.size(openIssuesList)} + ' Pending'">1 Pending</span>
+                    </div>
+                    <a th:href="@{/teacher/issues}" class="btn btn-sm btn-outline-secondary">View All</a>
+                </div>
+                <div class="p-3">
+                    <div class="row g-3">
+                        <div class="col-lg-6" th:each="t : ${openIssuesList}">
+                            <div class="p-3 bg-white border rounded-3 shadow-xs h-100 d-flex flex-column">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <strong class="text-dark fs-6" th:text="${t.student.fullName}">Aarav Sharma</strong>
+                                        <code class="small ms-1 px-1.5 py-0.5 bg-light rounded" th:text="${t.student.rollNumber}">2026IT01</code>
+                                    </div>
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1" th:text="${t.issueCategory}">Attendance Discrepancy</span>
+                                </div>
+
+                                <div class="bg-light p-2.5 rounded-3 mb-2 small text-secondary flex-grow-1" th:text="${t.description}">
+                                    Student grievance description.
+                                </div>
+
+                                <div class="d-flex flex-wrap justify-content-between align-items-center pt-2 border-top gap-2 mt-auto">
+                                    <div>
+                                        <a th:if="${t.proofFilePath}" th:href="@{'/files/issues/' + ${t.proofFilePath}}" target="_blank" class="btn btn-xs btn-outline-primary py-1 px-2 small">
+                                            <i class="bi bi-file-earmark-arrow-down me-1"></i> Download Proof
+                                        </a>
+                                        <span th:unless="${t.proofFilePath}" class="small text-muted fst-italic">No proof attached</span>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" th:data-bs-target="'#dashResolveModal' + ${t.ticketId}">
+                                            <i class="bi bi-check2-circle me-1"></i> Review & Resolve
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Resolve Modal for Dashboard -->
+                                <div class="modal fade" th:id="'dashResolveModal' + ${t.ticketId}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <form th:action="@{'/teacher/issues/' + ${t.ticketId} + '/resolve'}" method="post">
+                                                <input type="hidden" name="redirectSource" value="dashboard">
+                                                <div class="modal-header bg-light">
+                                                    <h5 class="modal-title fw-bold">Resolve Ticket #<span th:text="${t.ticketId}">1</span></h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body p-4">
+                                                    <div class="bg-light p-3 rounded-3 mb-3 small">
+                                                        <div><strong>Student:</strong> <span th:text="${t.student.fullName} + ' (' + ${t.student.rollNumber} + ')'">Student</span></div>
+                                                        <div><strong>Category:</strong> <span th:text="${t.issueCategory}">Category</span></div>
+                                                        <div class="mt-2 text-dark"><strong>Issue Description:</strong></div>
+                                                        <div class="text-secondary" th:text="${t.description}">Description</div>
+                                                        <div class="mt-2" th:if="${t.proofFilePath}">
+                                                            <a th:href="@{'/files/issues/' + ${t.proofFilePath}}" target="_blank" class="btn btn-xs btn-outline-primary">
+                                                                <i class="bi bi-file-earmark-arrow-down me-1"></i> View Attached Student Proof
+                                                            </a>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-semibold">Update Status *</label>
+                                                        <select name="status" class="form-select" required>
+                                                            <option th:each="st : ${statuses}" th:value="${st}" th:text="${st}" th:selected="${st == t.status}">STATUS</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label small fw-semibold">Faculty Remarks & Action Taken *</label>
+                                                        <textarea name="resolutionRemarks" rows="3" class="form-control"
+                                                                  placeholder="e.g. Attendance updated in register / leave approved / rejected due to lack of medical proof..." required></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer bg-light">
+                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Save Resolution</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Today's Lecture Schedule -->
+                <div class="col-lg-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <span class="fw-bold fs-6"><i class="bi bi-calendar-event text-primary me-2"></i>Today's Lecture Schedule</span>
+                            <a th:href="@{/teacher/timetable}" class="btn btn-sm btn-link text-decoration-none">Full Timetable</a>
+                        </div>
+                        <div class="p-3">
+                            <div th:each="slot : ${todayLectures}" class="p-3 mb-2 bg-light border rounded-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-primary px-2 py-1" th:text="${#temporals.format(slot.startTime, 'HH:mm')} + ' - ' + ${#temporals.format(slot.endTime, 'HH:mm')}">11:00 - 12:00</span>
+                                        <strong class="text-dark" th:text="${slot.subject.displayName}">DBMS</strong>
+                                    </div>
+                                    <div class="small text-muted mt-1">
+                                        <span><i class="bi bi-people me-1"></i><span th:text="${slot.classGroup.displayName}">Class</span></span> &bull;
+                                        <span><i class="bi bi-door-open me-1"></i><span th:text="${slot.campusLocation.roomNumber}">Room 302</span></span>
+                                    </div>
+                                </div>
+                                <a th:href="@{'/teacher/attendance?subjectId=' + ${slot.subject.subjectId}}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-check2"></i> Mark
+                                </a>
+                            </div>
+                            <div th:if="${#lists.isEmpty(todayLectures)}" class="text-center text-muted py-4">
+                                <i class="bi bi-cup-hot fs-2 text-secondary d-block mb-1"></i>
+                                No lectures scheduled for today!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Student Submissions -->
+                <div class="col-lg-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <span class="fw-bold fs-6"><i class="bi bi-file-earmark-text text-success me-2"></i>Recent Coursework Submissions</span>
+                            <a th:href="@{/teacher/assignments}" class="btn btn-sm btn-link text-decoration-none">View All</a>
+                        </div>
+                        <div class="p-3">
+                            <div th:each="sub : ${recentAssignments}" class="p-3 mb-2 bg-light border rounded-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong class="text-dark" th:text="${sub.assignmentTitle}">Assignment Title</strong>
+                                        <div class="small text-muted">
+                                            By: <span class="fw-semibold text-secondary" th:text="${sub.student.fullName}">Student</span> (<span th:text="${sub.subject.subjectCode}">IT401</span>)
+                                        </div>
+                                    </div>
+                                    <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(sub.status)}" th:text="${sub.status}">STATUS</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top">
+                                    <span class="small text-muted" th:text="${#temporals.format(sub.submittedAt, 'MMM dd, HH:mm')}">Date</span>
+                                    <a th:href="@{/teacher/assignments}" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size: 0.78rem;">Review</a>
+                                </div>
+                            </div>
+                            <div th:if="${#lists.isEmpty(recentAssignments)}" class="text-center text-muted py-4">
+                                No student submissions yet.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

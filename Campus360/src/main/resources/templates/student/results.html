@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('My Examination Results & Transcript')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('results')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <div class="mb-4">
+                <h3 class="fw-bold mb-1">Academic Performance & Examination Results</h3>
+                <p class="text-muted mb-0">Official academic transcripts, semester scores, and internal evaluation marks released by your faculty members.</p>
+            </div>
+
+            <!-- KPI Metric Cards for Student -->
+            <div class="row g-3 mb-4">
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Exams Evaluated</div>
+                                <h3 class="metric-value" th:text="${#lists.size(results)}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-blue">
+                                <i class="bi bi-file-earmark-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Standing</div>
+                                <h3 class="metric-value text-success">Good</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-green">
+                                <i class="bi bi-patch-check"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Roll Number</div>
+                                <h4 class="metric-value" th:text="${student.rollNumber}">2026IT01</h4>
+                            </div>
+                            <div class="metric-icon-wrap icon-purple">
+                                <i class="bi bi-person-badge"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Class Group</div>
+                                <h5 class="metric-value text-truncate" style="max-width: 140px;" th:text="${student.classGroup.displayName}">IT Div A</h5>
+                            </div>
+                            <div class="metric-icon-wrap icon-amber">
+                                <i class="bi bi-mortarboard"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Table Card -->
+            <div class="card card-custom">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <span class="fw-bold fs-6"><i class="bi bi-trophy-fill text-primary me-2"></i>Official Semester Grade Sheet</span>
+                    <span class="badge bg-light text-dark border" th:text="${#lists.size(results)} + ' Evaluations Published'">0 Evaluations</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Subject</th>
+                            <th>Exam Name</th>
+                            <th>Marks Scored</th>
+                            <th>Max Marks</th>
+                            <th>Percentage</th>
+                            <th>Grade</th>
+                            <th>Evaluator</th>
+                            <th>Released On</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="r : ${results}">
+                            <td>
+                                <strong class="text-dark" th:text="${r.subject.subjectName}">Database Management Systems</strong>
+                                <div class="small text-muted" th:text="${r.subject.subjectCode}">IT401</div>
+                            </td>
+                            <td><span class="badge bg-light text-dark border px-2 py-1" th:text="${r.examName}">Unit Test 1</span></td>
+                            <td><strong class="text-primary fs-6" th:text="${r.marksObtained}">28.5</strong></td>
+                            <td class="text-muted" th:text="${r.maxMarks}">30.0</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="progress flex-grow-1" style="height: 6px; width: 80px;">
+                                        <div class="progress-bar"
+                                             th:classappend="${r.getPercentage() >= 75 ? 'bg-success' : (r.getPercentage() >= 50 ? 'bg-primary' : 'bg-danger')}"
+                                             role="progressbar"
+                                             th:style="'width: ' + ${#numbers.formatDecimal(r.getPercentage(), 1, 1)} + '%'"></div>
+                                    </div>
+                                    <small class="fw-bold" th:text="${#numbers.formatDecimal(r.getPercentage(), 1, 1)} + '%'">95%</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill px-3 py-1"
+                                      th:classappend="${r.grade == 'O' or r.grade == 'A+' or r.grade == 'A' ? 'bg-success-subtle text-success border border-success-subtle' : (r.grade == 'F' ? 'bg-danger-subtle text-danger border border-danger-subtle' : 'bg-primary-subtle text-primary border border-primary-subtle')}"
+                                      th:text="${r.grade}">A+</span>
+                            </td>
+                            <td class="small text-secondary" th:text="${r.uploadedByTeacher != null ? r.uploadedByTeacher.fullName : 'Faculty'}">Prof. Vikram Deshmukh</td>
+                            <td class="small text-muted" th:text="${#temporals.format(r.uploadedAt, 'MMM dd, yyyy')}">Date</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(results)}">
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="bi bi-clock-history fs-1 text-secondary d-block mb-2"></i>
+                                No examination marks published for your profile yet. Once faculty uploads semester or internal marks, they will appear here.
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Student Grievance & Issue Reporting')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('issues')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <!-- Page Header -->
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+                <div>
+                    <h3 class="fw-bold mb-1 text-dark"><i class="bi bi-patch-question-fill text-primary me-2"></i>Grievances & Requests</h3>
+                    <p class="text-muted mb-0">Submit attendance discrepancies, leave requests, or queries with supporting documents.</p>
+                </div>
+                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#raiseTicketModal">
+                    <i class="bi bi-plus-circle me-1"></i> Raise Grievance
+                </button>
+            </div>
+
+            <!-- Tickets Table Card -->
+            <div class="card card-custom">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                    <span class="fw-bold text-dark"><i class="bi bi-ticket-detailed-fill text-primary me-2"></i>My Reported Grievances</span>
+                    <span class="badge bg-light text-dark border" th:text="${#lists.size(tickets)} + ' Total Tickets'">0</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Ticket #</th>
+                            <th>Concerned Faculty / Target</th>
+                            <th>Category</th>
+                            <th>Grievance Details</th>
+                            <th>Uploaded Proof</th>
+                            <th>Status</th>
+                            <th>Faculty Remarks & Resolution</th>
+                            <th>Date Raised</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="t : ${tickets}">
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace fw-semibold" th:text="'#' + ${t.ticketId}">#1</span>
+                            </td>
+                            <td>
+                                <div th:if="${t.assignedTeacher != null}">
+                                    <div class="fw-semibold text-dark"><i class="bi bi-person-badge text-success me-1"></i><span th:text="${t.assignedTeacher.fullName}">Prof Name</span></div>
+                                    <small class="text-muted" th:text="${t.assignedTeacher.department}">Dept</small>
+                                </div>
+                                <div th:unless="${t.assignedTeacher != null}">
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">Office Administration</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border fw-medium" th:text="${t.issueCategory}">Attendance Discrepancy</span>
+                            </td>
+                            <td style="max-width: 280px;">
+                                <div class="text-break" th:text="${t.description}">Description</div>
+                            </td>
+                            <td>
+                                <a th:if="${t.proofFilePath}" th:href="@{'/files/issues/' + ${t.proofFilePath}}" target="_blank" class="btn btn-sm btn-outline-info">
+                                    <i class="bi bi-paperclip me-1"></i> View Proof
+                                </a>
+                                <span th:unless="${t.proofFilePath}" class="text-muted small">No attachment</span>
+                            </td>
+                            <td>
+                                <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(t.status)}" th:text="${t.status}">OPEN</span>
+                            </td>
+                            <td style="max-width: 250px;">
+                                <div th:if="${t.resolutionRemarks}" class="p-2 bg-light rounded border border-light-subtle text-dark small">
+                                    <div class="fw-bold text-secondary mb-1"><i class="bi bi-check2-circle text-success me-1"></i>Faculty Response:</div>
+                                    <span th:text="${t.resolutionRemarks}">Remarks</span>
+                                </div>
+                                <span th:unless="${t.resolutionRemarks}" class="text-muted small fst-italic">Awaiting faculty review</span>
+                            </td>
+                            <td class="small text-muted" th:text="${#temporals.format(t.createdAt, 'MMM dd, yyyy HH:mm')}">Date</td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(tickets)}">
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <div class="mb-2"><i class="bi bi-patch-check fs-1 text-success opacity-75"></i></div>
+                                <div class="fw-semibold">No grievance tickets raised.</div>
+                                <small class="text-muted">You have no active or historical issues reported to faculty.</small>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Modal: Raise Ticket -->
+            <div class="modal fade" id="raiseTicketModal" tabindex="-1" aria-labelledby="raiseTicketModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <form th:action="@{/student/issues/raise}" method="post" enctype="multipart/form-data">
+                            <div class="modal-header">
+                                <h5 class="modal-title fw-bold" id="raiseTicketModalLabel">
+                                    <i class="bi bi-patch-question text-primary me-2"></i>Raise a Grievance
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="alert alert-light border py-2 px-3 small d-flex align-items-center gap-2 mb-3">
+                                    <i class="bi bi-info-circle text-primary fs-5"></i>
+                                    <span>Tickets are routed directly to the selected faculty member or office administration.</span>
+                                </div>
+
+                                <!-- Target Type -->
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Reporting Destination *</label>
+                                    <select name="targetRole" id="targetRoleSelect" class="form-select" onchange="handleTargetRoleChange()" required>
+                                        <option value="TEACHER" selected>Concerned Faculty / Professor (Academic, Attendance, Medical)</option>
+                                        <option value="OFFICE_STAFF">Office Staff (College Fee, Vault Document, Admin)</option>
+                                    </select>
+                                </div>
+
+                                <!-- Teacher Selection Group -->
+                                <div class="mb-3" id="facultySelectGroup">
+                                    <label class="form-label small fw-semibold">Select Concerned Professor *</label>
+                                    <select name="teacherId" id="teacherIdSelect" class="form-select" required>
+                                        <option value="" disabled selected>-- Select Course Professor --</option>
+                                        <option th:each="tc : ${teachers}" th:value="${tc.teacherId}" th:text="${tc.fullName} + ' — ' + ${tc.department} + ' (' + ${tc.designation} + ')'">Prof Name</option>
+                                    </select>
+                                    <div class="form-text">Choose the professor responsible for your subject or class coordination.</div>
+                                </div>
+
+                                <!-- Category -->
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Issue Category *</label>
+                                    <select name="issueCategory" class="form-select" required>
+                                        <option value="Attendance Discrepancy">Attendance Discrepancy (Marked Absent by Mistake)</option>
+                                        <option value="Medical Leave">Medical Leave / Fitness Certificate</option>
+                                        <option value="Internal Marks Clarification">Internal Marks / Unit Test Clarification</option>
+                                        <option value="Assignment Reconsideration">Assignment Review / Extension Request</option>
+                                        <option value="Document Correction">Document / Profile Correction Request</option>
+                                        <option value="Other">Other Academic / Campus Query</option>
+                                    </select>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="mb-3">
+                                    <label class="form-label small fw-semibold">Detailed Explanation *</label>
+                                    <textarea name="description" rows="4" class="form-control" placeholder="Specify date, lecture time, subject name, reason for absence, or discrepancy details..." required></textarea>
+                                </div>
+
+                                <!-- Proof File -->
+                                <div class="mb-2">
+                                    <label class="form-label small fw-semibold">Attach Proof Document (Optional)</label>
+                                    <input type="file" name="proofFile" class="form-control">
+                                    <div class="form-text">Attach doctor prescription, medical certificate, bus pass, or relevant receipt (PDF, JPG, PNG).</div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary"><i class="bi bi-send-fill me-1"></i> Send to Faculty</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+<script>
+    function handleTargetRoleChange() {
+        const role = document.getElementById('targetRoleSelect').value;
+        const facultyGroup = document.getElementById('facultySelectGroup');
+        const teacherSelect = document.getElementById('teacherIdSelect');
+        if (role === 'TEACHER') {
+            facultyGroup.style.display = 'block';
+            teacherSelect.required = true;
+        } else {
+            facultyGroup.style.display = 'none';
+            teacherSelect.required = false;
+        }
+    }
+    document.addEventListener('DOMContentLoaded', handleTargetRoleChange);
+</script>
+</body>
+</html>

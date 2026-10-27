@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Student Dashboard')}"></head>
+<body>
+<div class="app-wrapper">
+    <div th:replace="~{fragments/layout :: sidebar('dashboard')}"></div>
+
+    <div class="main-content">
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <main class="container-fluid p-4">
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <!-- Welcome Banner -->
+            <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+                <div>
+                    <h3 class="fw-bold mb-1">Welcome, <span th:text="${student.fullName}">Abhijit Mishra</span></h3>
+                    <p class="text-muted mb-0">Roll No: <span class="fw-bold" th:text="${student.rollNumber}">2026IT01</span> &bull; <span th:text="${student.classGroup.displayName}">2nd Year B.E. IT - Div A</span></p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/student/assignments}" class="btn btn-primary shadow-sm">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Submit Assignment
+                    </a>
+                    <a th:href="@{/student/issues}" class="btn btn-outline-primary">
+                        <i class="bi bi-patch-question me-1"></i> Raise Grievance
+                    </a>
+                </div>
+            </div>
+
+            <!-- Overall Attendance Metric & KPI Cards -->
+            <div class="row g-4 mb-4">
+                <!-- Overall Attendance Card -->
+                <div class="col-xl-4 col-md-6">
+                    <div class="card-metric h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <div class="metric-label">Overall Attendance</div>
+                                <h3 class="metric-value" th:text="${overallAttendance} + '%'">85.0%</h3>
+                            </div>
+                            <div class="metric-icon-wrap" th:classappend="${overallAttendance >= 75 ? 'icon-green' : 'icon-amber'}">
+                                <i class="bi bi-pie-chart"></i>
+                            </div>
+                        </div>
+                        <div class="progress mt-2 mb-2" style="height: 6px; border-radius: 99px;">
+                            <div class="progress-bar" role="progressbar"
+                                 th:classappend="${overallAttendance >= 75 ? 'bg-success' : 'bg-warning'}"
+                                 th:style="'width: ' + ${overallAttendance} + '%'"></div>
+                        </div>
+                        <small class="text-muted" th:if="${overallAttendance >= 75}">
+                            <i class="bi bi-check-circle-fill text-success me-1"></i> Eligible for exams (&gt;= 75%).
+                        </small>
+                        <small class="text-danger fw-semibold" th:unless="${overallAttendance >= 75}">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Attendance is below 75% threshold!
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Active Announcements Card -->
+                <div class="col-xl-4 col-md-6">
+                    <div class="card-metric h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <div class="metric-label">Active Notices</div>
+                                <h3 class="metric-value" th:text="${#lists.size(activeAnnouncements)}">1</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-blue">
+                                <i class="bi bi-megaphone"></i>
+                            </div>
+                        </div>
+                        <p class="small text-muted mb-2">Department announcements and circulars.</p>
+                        <a th:href="@{/student/announcements}" class="small text-primary text-decoration-none fw-semibold">
+                            View Notices &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Document Vault Quick Access -->
+                <div class="col-xl-4 col-md-12">
+                    <div class="card-metric h-100">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <div class="metric-label">Document Vault</div>
+                                <h3 class="metric-value">Verified</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-purple">
+                                <i class="bi bi-safe"></i>
+                            </div>
+                        </div>
+                        <p class="small text-muted mb-2">Official Admission receipts & bonafide certificates.</p>
+                        <a th:href="@{/student/vault}" class="small text-primary text-decoration-none fw-semibold">
+                            Open Vault &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MU Question Papers Banner -->
+            <div class="card card-custom p-3 mb-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="metric-icon-wrap icon-amber" style="width: 42px; height: 42px; font-size: 1.2rem;">
+                            <i class="bi bi-file-earmark-text text-danger"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0">Mumbai University (MU) Question Papers</h6>
+                            <p class="text-muted small mb-0">Access past examination papers and semester revision schemes directly via <strong>muquestionpapers.com</strong>.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a th:href="@{/student/question-papers}" class="btn btn-sm btn-primary">
+                            <i class="bi bi-folder2-open me-1"></i> View Papers
+                        </a>
+                        <a href="https://muquestionpapers.com" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-box-arrow-up-right me-1"></i> muquestionpapers.com
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject-wise Attendance Breakdown -->
+            <div class="card card-custom mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <span class="fw-bold"><i class="bi bi-bar-chart-line text-primary me-2"></i>Subject Attendance Breakdown</span>
+                    <a th:href="@{/student/attendance}" class="btn btn-sm btn-link text-decoration-none">Detailed Logs</a>
+                </div>
+                <div class="p-3">
+                    <div class="row g-3">
+                        <div th:each="stat : ${subjectStats}" class="col-md-6">
+                            <div class="p-3 bg-light border rounded-3">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <strong class="text-dark" th:text="${stat.subject.subjectName}">Subject Name</strong>
+                                        <div class="small text-muted" th:text="${stat.subject.subjectCode}">Code</div>
+                                    </div>
+                                    <span class="badge px-2 py-1"
+                                          th:classappend="${stat.percentage >= 75 ? 'bg-success' : 'bg-warning text-dark'}"
+                                          th:text="${stat.percentage} + '%'">80%</span>
+                                </div>
+                                <div class="progress mb-2" style="height: 6px;">
+                                    <div class="progress-bar"
+                                         th:classappend="${stat.percentage >= 75 ? 'bg-success' : 'bg-warning'}"
+                                         role="progressbar" th:style="'width: ' + ${stat.percentage} + '%'"></div>
+                                </div>
+                                <small class="text-muted">
+                                    Attended: <strong th:text="${stat.attendedLectures}">8</strong> /
+                                    Conducted: <strong th:text="${stat.totalLectures}">10</strong> lectures
+                                </small>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(subjectStats)}" class="col-12 text-center text-muted py-3">
+                            No subject attendance recorded yet.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Columns: Active Announcements & Recent Exam Results -->
+            <div class="row g-4">
+                <!-- Current Active Announcements -->
+                <div class="col-lg-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <span class="fw-bold"><i class="bi bi-bell-fill text-warning me-2"></i>Current Announcements</span>
+                            <a th:href="@{/student/announcements}" class="btn btn-sm btn-link text-decoration-none">Past Archive</a>
+                        </div>
+                        <div class="p-3">
+                            <div th:each="ann : ${activeAnnouncements}" class="p-3 mb-2 bg-light border rounded-3">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <strong class="text-dark" th:text="${ann.title}">Announcement Title</strong>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">ACTIVE</span>
+                                </div>
+                                <p class="small text-secondary mb-2" th:text="${ann.message}">Message body</p>
+                                <div class="d-flex justify-content-between align-items-center small text-muted">
+                                    <span>By: <span class="fw-semibold" th:text="${ann.createdByTeacher != null ? ann.createdByTeacher.fullName : 'Faculty'}">Teacher</span></span>
+                                    <span>Valid till: <strong th:text="${ann.expiryDate}">2026-10-30</strong></span>
+                                </div>
+                            </div>
+                            <div th:if="${#lists.isEmpty(activeAnnouncements)}" class="text-center text-muted py-4">
+                                <i class="bi bi-megaphone fs-2 text-secondary d-block mb-1"></i>
+                                No active announcements at this time.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Exam Results -->
+                <div class="col-lg-6">
+                    <div class="card card-custom h-100">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <span class="fw-bold"><i class="bi bi-trophy-fill text-success me-2"></i>Recent Examination Marks</span>
+                            <a th:href="@{/student/results}" class="btn btn-sm btn-link text-decoration-none">All Results</a>
+                        </div>
+                        <div class="p-3">
+                            <div th:each="res : ${recentResults}" class="p-3 mb-2 bg-light border rounded-3 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong class="text-dark" th:text="${res.subject.subjectName}">Subject</strong>
+                                    <div class="small text-muted">
+                                        <span class="badge bg-light text-dark border me-1" th:text="${res.examName}">Unit Test 1</span>
+                                        Released: <span th:text="${#temporals.format(res.uploadedAt, 'MMM dd, yyyy')}">Date</span>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold fs-5 text-dark">
+                                        <span th:text="${res.marksObtained}">28.5</span> / <span class="text-muted" th:text="${res.maxMarks}">30</span>
+                                    </div>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle" th:text="'Grade: ' + ${res.grade}">Grade: A+</span>
+                                </div>
+                            </div>
+                            <div th:if="${#lists.isEmpty(recentResults)}" class="text-center text-muted py-4">
+                                No examination results published yet.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>

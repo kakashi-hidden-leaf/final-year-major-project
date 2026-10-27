@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Office Staff Dashboard')}"></head>
+<body>
+<div class="app-wrapper">
+    <!-- Sidebar -->
+    <div th:replace="~{fragments/layout :: sidebar('dashboard')}"></div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+        <!-- Top Navbar -->
+        <div th:replace="~{fragments/layout :: topbar}"></div>
+
+        <!-- Body Container -->
+        <main class="container-fluid p-4">
+            <!-- Flash Alerts -->
+            <div th:replace="~{fragments/layout :: alerts}"></div>
+
+            <!-- Welcome Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold mb-1">Administrative Dashboard</h3>
+                    <p class="text-muted mb-0">Overview of campus operations, admissions, enrollment, and administrative tickets.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/staff/enrollment}" class="btn btn-primary shadow-sm">
+                        <i class="bi bi-person-plus me-1"></i> Enroll New Student
+                    </a>
+                    <a th:href="@{/staff/vault}" class="btn btn-outline-primary">
+                        <i class="bi bi-cloud-arrow-up me-1"></i> Upload Vault Doc
+                    </a>
+                </div>
+            </div>
+
+            <!-- KPI Metric Cards -->
+            <div class="row g-3 mb-4">
+                <!-- Total Students -->
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Enrolled Students</div>
+                                <h3 class="metric-value" th:text="${totalStudents}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-purple">
+                                <i class="bi bi-mortarboard"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Faculty -->
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Faculty Members</div>
+                                <h3 class="metric-value" th:text="${totalTeachers}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-blue">
+                                <i class="bi bi-person-workspace"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Classes -->
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Active Classes</div>
+                                <h3 class="metric-value" th:text="${totalClasses != null ? totalClasses : 1}">1</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-green">
+                                <i class="bi bi-collection"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Open Issue Tickets -->
+                <div class="col-xl-3 col-sm-6">
+                    <div class="card-metric">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="metric-label">Admin Tickets</div>
+                                <h3 class="metric-value" th:text="${openIssues}">0</h3>
+                            </div>
+                            <div class="metric-icon-wrap icon-amber">
+                                <i class="bi bi-ticket-detailed"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Column Overview -->
+            <div class="row g-4">
+                <!-- Enrolled Students Table -->
+                <div class="col-lg-7">
+                    <div class="card card-custom h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="fw-bold"><i class="bi bi-people-fill text-primary me-2"></i>Recently Enrolled Students</span>
+                            <a th:href="@{/staff/enrollment}" class="btn btn-sm btn-link text-decoration-none">View All</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                <tr>
+                                    <th>Roll No</th>
+                                    <th>Full Name</th>
+                                    <th>Class Group</th>
+                                    <th>Phone</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="s : ${recentStudents}">
+                                    <td><strong th:text="${s.rollNumber}">2026IT01</strong></td>
+                                    <td th:text="${s.fullName}">Abhijit Mishra</td>
+                                    <td><span class="badge bg-light text-dark border" th:text="${s.classGroup.displayName}">IT</span></td>
+                                    <td th:text="${s.phone != null ? s.phone : 'N/A'}">+91 9876543210</td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(recentStudents)}">
+                                    <td colspan="4" class="text-center text-muted py-3">No students enrolled yet.</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Open Administrative Issues -->
+                <div class="col-lg-5">
+                    <div class="card card-custom h-100">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span class="fw-bold"><i class="bi bi-exclamation-circle-fill text-warning me-2"></i>Pending Administrative Issues</span>
+                            <a th:href="@{/staff/issues}" class="btn btn-sm btn-link text-decoration-none">Manage</a>
+                        </div>
+                        <div class="p-3">
+                            <div th:each="ticket : ${recentStaffIssues}" class="p-3 mb-2 bg-light rounded-3 border">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <strong class="text-dark" th:text="${ticket.issueCategory}">Issue Category</strong>
+                                    <span class="badge" th:classappend="'badge-' + ${#strings.toLowerCase(ticket.status)}" th:text="${ticket.status}">STATUS</span>
+                                </div>
+                                <p class="small text-secondary mb-2" th:text="${ticket.description}">Description</p>
+                                <div class="d-flex justify-content-between align-items-center small text-muted">
+                                    <span>By: <span class="fw-semibold" th:text="${ticket.student.fullName}">Student</span> (<span th:text="${ticket.student.rollNumber}">Roll</span>)</span>
+                                    <a th:href="@{/staff/issues}" class="btn btn-sm btn-outline-primary py-0 px-2" style="font-size: 0.75rem;">Inspect</a>
+                                </div>
+                            </div>
+                            <div th:if="${#lists.isEmpty(recentStaffIssues)}" class="text-center text-muted py-4">
+                                <i class="bi bi-check2-all fs-2 text-success d-block mb-1"></i>
+                                All administrative tickets are currently resolved!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div th:replace="~{fragments/layout :: scripts}"></div>
+</body>
+</html>
